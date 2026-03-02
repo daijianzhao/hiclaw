@@ -992,13 +992,12 @@ EOF
     log "The following domains are configured to resolve to 127.0.0.1:"
     log "  ${HICLAW_MATRIX_DOMAIN%%:*} ${HICLAW_MATRIX_CLIENT_DOMAIN} ${HICLAW_AI_GATEWAY_DOMAIN} ${HICLAW_FS_DOMAIN}"
     log ""
-    local element_url="http://${HICLAW_MATRIX_CLIENT_DOMAIN}:${HICLAW_PORT_GATEWAY}/#/login"
     local lan_ip
     lan_ip=$(detect_lan_ip)
     echo -e "\033[33m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
     echo -e "\033[33m  ★ Open the following URL in your browser to start:                           ★\033[0m"
     echo -e "\033[33m                                                                                 \033[0m"
-    echo -e "\033[1;36m    ${element_url}\033[0m"
+    echo -e "\033[1;36m    http://127.0.0.1:${HICLAW_PORT_ELEMENT_WEB:-18088}/#/login\033[0m"
     echo -e "\033[33m                                                                                 \033[0m"
     echo -e "\033[33m  Login with:                                                                    \033[0m"
     echo -e "\033[33m    Username: \033[1;32m${HICLAW_ADMIN_USER}\033[0m"
