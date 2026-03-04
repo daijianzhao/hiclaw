@@ -136,19 +136,25 @@ curl -sf -X POST http://127.0.0.1:6167/_matrix/client/v3/register \
 
 # Get Manager Agent's Matrix access token
 log "Obtaining Manager Matrix access token..."
-MANAGER_TOKEN=$(curl -sf -X POST http://127.0.0.1:6167/_matrix/client/v3/login \
+_LOGIN_RESPONSE=$(curl -sf -X POST http://127.0.0.1:6167/_matrix/client/v3/login \
     -H 'Content-Type: application/json' \
     -d '{
         "type": "m.login.password",
         "identifier": {"type": "m.id.user", "user": "manager"},
         "password": "'"${HICLAW_MANAGER_PASSWORD}"'"
-    }' | jq -r '.access_token')
+    }' 2>&1)
+_LOGIN_EXIT=$?
+log "Matrix login HTTP exit code: ${_LOGIN_EXIT}"
+log "Matrix login response: ${_LOGIN_RESPONSE}"
+
+MANAGER_TOKEN=$(echo "${_LOGIN_RESPONSE}" | jq -r '.access_token' 2>/dev/null)
 
 if [ -z "${MANAGER_TOKEN}" ] || [ "${MANAGER_TOKEN}" = "null" ]; then
-    log "ERROR: Failed to obtain Manager Matrix token"
+    log "ERROR: Failed to obtain Manager Matrix token (exit=${_LOGIN_EXIT})"
+    log "ERROR: Login response was: ${_LOGIN_RESPONSE}"
     exit 1
 fi
-log "Manager Matrix token obtained"
+log "Manager Matrix token obtained (token prefix: ${MANAGER_TOKEN:0:10}...)"
 
 # ============================================================
 # Initialize Higress Console (Session Cookie auth)
@@ -278,9 +284,18 @@ if [ -f /root/manager-workspace/openclaw.json ]; then
         | .agents.defaults.model.primary = ("hiclaw-gateway/" + $model)' \
        /root/manager-workspace/openclaw.json > /tmp/openclaw.json.tmp && \
         mv /tmp/openclaw.json.tmp /root/manager-workspace/openclaw.json
+    # Verify the token was written correctly
+    _written_token=$(jq -r '.channels.matrix.accessToken' /root/manager-workspace/openclaw.json 2>/dev/null)
+    if [ -z "${_written_token}" ] || [ "${_written_token}" = "null" ]; then
+        log "ERROR: Matrix token was not written correctly to openclaw.json (got: ${_written_token})"
+    else
+        log "Matrix token written to openclaw.json (prefix: ${_written_token:0:10}...)"
+    fi
 else
     log "Manager openclaw.json not found, generating from template..."
     envsubst < /opt/hiclaw/configs/manager-openclaw.json.tmpl > /root/manager-workspace/openclaw.json
+    _written_token=$(jq -r '.channels.matrix.accessToken' /root/manager-workspace/openclaw.json 2>/dev/null)
+    log "Matrix token written from template (prefix: ${_written_token:0:10}...)"
 fi
 
 # ============================================================
