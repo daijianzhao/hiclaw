@@ -3,6 +3,7 @@
 - [Manager Agent startup timeout](#manager-agent-startup-timeout)
 - [Accessing the web UI from other devices on the LAN](#accessing-the-web-ui-from-other-devices-on-the-lan)
 - [Cannot connect to Matrix server locally](#cannot-connect-to-matrix-server-locally)
+- [How to talk to a Worker directly](#how-to-talk-to-a-worker-directly)
 
 ---
 
@@ -59,3 +60,13 @@ For example, if your LAN IP is `192.168.1.100`, enter `http://192.168.1.100:1808
 If the Matrix server is unreachable even on the local machine, check whether a proxy is enabled in your browser or system. The `*-local.hiclaw.io` domain resolves to `127.0.0.1` by default — if traffic is routed through a proxy, requests will never reach the local server.
 
 Disable the proxy, or add `*-local.hiclaw.io` / `127.0.0.1` to your proxy bypass list.
+
+---
+
+## How to talk to a Worker directly
+
+After creating a Worker, Manager automatically adds you and the Worker to a shared group room. In that room, you must **@mention the Worker** for it to respond — messages without a mention are ignored.
+
+When using Element or similar clients, type `@` followed by the first letter(s) of the Worker's display name to trigger autocomplete and select the right user.
+
+Alternatively, you can click the Worker's avatar and open a **direct message** (DM) conversation. In a DM you don't need to @mention — every message triggers the Worker. Keep in mind that Manager is not in the DM room and won't see any of that conversation.
