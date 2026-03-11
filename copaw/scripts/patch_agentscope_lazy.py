@@ -391,34 +391,60 @@ def patch(site: Path) -> None:
     # ------------------------------------------------------------------ #
     # 9) tracing/_trace.py + _extractor.py — defer embedding import
     #    (prevents numpy load via embedding._file_cache)
+    #
+    #    EmbeddingResponse/EmbeddingModelBase are used at runtime in
+    #    trace_embedding(), so we can't put them under TYPE_CHECKING.
+    #    Instead, remove the top-level import and add a lazy import
+    #    inside trace_embedding() / the functions that reference them.
     # ------------------------------------------------------------------ #
-    for relpath in ["tracing/_trace.py", "tracing/_extractor.py"]:
-        fp = site / relpath
-        src = fp.read_text()
-        if "from ..embedding import " in src and "TYPE_CHECKING" in src:
-            # Move runtime embedding import under TYPE_CHECKING
-            lines = src.split("\n")
-            new_lines = []
-            for line in lines:
-                if (line.startswith("from ..embedding import ")
-                        and "TYPE_CHECKING" not in line):
-                    continue
-                if line.strip() == "if TYPE_CHECKING:":
-                    new_lines.append(line)
-                    new_lines.append("    from ..embedding import EmbeddingModelBase, EmbeddingResponse")
-                    continue
-                new_lines.append(line)
-            fp.write_text("\n".join(new_lines))
-        elif "from ..embedding import " in src:
-            src = src.replace(
-                "from ..embedding import EmbeddingModelBase, EmbeddingResponse\n",
-                "",
-            )
-            src = src.replace(
-                "from ..embedding import EmbeddingModelBase\n",
-                "",
-            )
-            fp.write_text(src)
+    # _trace.py: remove top-level embedding import, use string annotations
+    # and lazy-import inside trace_embedding's wrapper body
+    trace_py = site / "tracing/_trace.py"
+    src = trace_py.read_text()
+    if "from ..embedding import EmbeddingModelBase, EmbeddingResponse\n" in src:
+        src = src.replace(
+            "from ..embedding import EmbeddingModelBase, EmbeddingResponse\n",
+            "",
+        )
+        # String-ify all type annotations referencing these classes
+        src = src.replace(
+            "func: Callable[..., Coroutine[Any, Any, EmbeddingResponse]],\n"
+            ") -> Callable[..., Coroutine[Any, Any, EmbeddingResponse]]:",
+            'func: "Callable[..., Coroutine[Any, Any, EmbeddingResponse]]",\n'
+            ') -> "Callable[..., Coroutine[Any, Any, EmbeddingResponse]]":',
+        )
+        src = src.replace(
+            "        self: EmbeddingModelBase,",
+            '        self: "EmbeddingModelBase",',
+        )
+        src = src.replace(
+            "    ) -> EmbeddingResponse:",
+            '    ) -> "EmbeddingResponse":',
+        )
+        # Add lazy import before the isinstance check
+        src = src.replace(
+            "        if not isinstance(self, EmbeddingModelBase):",
+            "        from ..embedding import EmbeddingModelBase\n"
+            "        if not isinstance(self, EmbeddingModelBase):",
+        )
+        trace_py.write_text(src)
+
+    # _extractor.py: move embedding import under TYPE_CHECKING
+    # (only used for type hints in function signatures, not runtime)
+    extractor_py = site / "tracing/_extractor.py"
+    src = extractor_py.read_text()
+    if ("from ..embedding import EmbeddingModelBase\n" in src
+            and "TYPE_CHECKING" in src):
+        src = src.replace(
+            "from ..embedding import EmbeddingModelBase\n",
+            "",
+        )
+        src = src.replace(
+            "if TYPE_CHECKING:\n",
+            "if TYPE_CHECKING:\n"
+            "    from ..embedding import EmbeddingModelBase\n",
+        )
+        extractor_py.write_text(src)
 
     # ------------------------------------------------------------------ #
     # 10) agent/_react_agent.py — defer rag import (pulls dashscope SDK)
