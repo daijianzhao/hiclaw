@@ -14,7 +14,7 @@
 - [Manager/Worker 不回复消息怎么办](#managerworker-不回复消息怎么办)
 - [在房间里和 Manager 聊天没有响应或返回错误状态码](#在房间里和-manager-聊天没有响应或返回错误状态码)
 - [HTTP 401: invalid access token or token expired](#http-401-invalid-access-token-or-token-expired)
-- [OpenClaw 会话管理（通过 IM 指令）](#openclaw-会话管理通过-im-指令)
+- [会话管理（通过 IM 指令）](#会话管理通过-im-指令)
 
 ---
 
@@ -308,11 +308,15 @@ docker restart hiclaw-manager
 
 ---
 
-## OpenClaw 会话管理（通过 IM 指令）
+## 会话管理（通过 IM 指令）
 
 HiClaw 基于 OpenClaw，通过 Matrix 渠道（Element Web）与 Agent 通信。OpenClaw 支持**斜杠命令**，你可以直接在聊天中以独立消息的形式发送这些指令，由 Gateway 在模型处理前解析执行。
 
 **注意：** 大多数命令必须以**独立消息**发送，且以 `/` 开头。不要在同一则消息中混入其他文字。
+
+**群聊中使用：** 可以在同一条消息中组合 @提及和斜杠命令，例如 `@Worker /compact` 或 `@Worker /new`。@提及确保命令发送给正确的 Agent，斜杠命令仍由 Gateway 正常处理。
+
+以下以 OpenClaw（Manager 和 OpenClaw Worker）为例列出可用命令。CoPaw Worker 使用不同的命令集，详见 [CoPaw 命令参考](https://copaw.agentscope.io/docs/commands)。
 
 ### 会话重置与压缩
 

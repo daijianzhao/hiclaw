@@ -14,7 +14,7 @@
 - [Manager/Worker not responding to messages](#managerworker-not-responding-to-messages)
 - [Manager not responding or returning error status codes](#manager-not-responding-or-returning-error-status-codes)
 - [HTTP 401: invalid access token or token expired](#http-401-invalid-access-token-or-token-expired)
-- [OpenClaw session management via IM](#openclaw-session-management-via-im)
+- [Session management via IM](#session-management-via-im)
 
 ---
 
@@ -307,11 +307,15 @@ Then ask Manager to help configure the same channels in its own config.
 
 ---
 
-## OpenClaw session management via IM
+## Session management via IM
 
 HiClaw uses OpenClaw with the Matrix channel (Element Web). OpenClaw supports **slash commands** that you can send directly in the chat as standalone messages. These commands are processed by the Gateway before the model sees them.
 
 **Important:** Most commands must be sent as a **standalone** message that starts with `/`. Do not mix them with other text in the same message.
+
+**In group rooms:** You can combine an @mention with a slash command in the same message, e.g. `@Worker /compact` or `@Worker /new`. The @mention ensures the command reaches the right agent, and the slash command is still processed by the Gateway as usual.
+
+The following commands apply to OpenClaw (Manager and OpenClaw Workers). CoPaw Workers use a different command set — see [CoPaw Commands](https://copaw.agentscope.io/docs/commands) for details.
 
 ### Session reset and compaction
 

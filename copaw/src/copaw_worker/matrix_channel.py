@@ -57,6 +57,11 @@ except ImportError:  # pragma: no cover
 
 CHANNEL_KEY = "matrix"
 
+# Known CoPaw slash commands — used to decide whether to strip @mention prefix
+_SLASH_COMMANDS = frozenset({
+    "message", "history", "compact_str", "compact", "new", "clear",
+})
+
 
 def _text_to_html(text: str) -> str:
     """Escape HTML special chars and convert newlines to <br> for Matrix."""
@@ -351,6 +356,29 @@ class MatrixChannel(BaseChannel):
             return True
         return False
 
+    def _strip_mention_prefix(self, text: str) -> str:
+        """Strip leading @mention prefix so slash commands can be detected.
+
+        Handles both MXID format (@user:server) and display name mentions.
+        E.g. ``"@worker:hs.example /new"`` → ``"/new"``.
+        """
+        if not self._user_id:
+            return text
+        # 1. Strip MXID (@user:server) at start
+        escaped = re.escape(self._user_id)
+        result = re.sub(rf"^{escaped}\s*", "", text, flags=re.IGNORECASE)
+        if result != text:
+            return result.strip()
+        # 2. Strip display name (localpart without @) at start
+        localpart = self._user_id.split(":")[0].lstrip("@")
+        if localpart:
+            result = re.sub(
+                rf"^{re.escape(localpart)}\s*", "", text, flags=re.IGNORECASE,
+            )
+            if result != text:
+                return result.strip()
+        return text
+
     # ------------------------------------------------------------------
     # History accumulation (requireMention + context buffering)
     # ------------------------------------------------------------------
@@ -594,8 +622,17 @@ class MatrixChannel(BaseChannel):
         await self._send_read_receipt(room_id, event.event_id)
         await self._send_typing(room_id, True)
 
+        # Strip leading @mention so slash commands are detected in group rooms.
+        # Only strip for known CoPaw commands to avoid altering normal messages.
+        command_text = text
+        if not is_dm:
+            stripped = self._strip_mention_prefix(text)
+            cmd = stripped.lstrip("/").split()[0] if stripped.startswith("/") else ""
+            if cmd in _SLASH_COMMANDS:
+                command_text = stripped
+
         # Build content parts, prepending accumulated history for group rooms
-        content_parts: list[dict[str, Any]] = [{"type": "text", "text": text}]
+        content_parts: list[dict[str, Any]] = [{"type": "text", "text": command_text}]
         if not is_dm:
             content_parts = self._apply_history_to_parts(room_id, content_parts)
 

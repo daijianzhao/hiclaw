@@ -27,4 +27,7 @@ Record image-affecting changes to `manager/`, `worker/`, `openclaw-base/` here b
 - feat(manager): add `mcporter` to default Worker skills in `create-worker.sh` so new Workers get mcporter skill automatically
 - feat(manager): `upgrade-builtins.sh` now pushes all `worker-skills/` to every registered Worker on upgrade (auto-registers new skills in registry); use runtime-specific agent source for builtin skills (copaw vs openclaw)
 - feat(manager): add mcporter SKILL.md to `worker-agent/skills/` (OpenClaw builtin) so upgrade-builtins pushes it to all OpenClaw workers; `copaw-worker-agent/skills/mcporter/` already present for CoPaw workers
+- feat(openclaw-base): update OpenClaw to `685223f` — support sending slash commands with @mention in group rooms (e.g. `@Worker /compact`)
+- fix(copaw): strip leading @mention prefix from message text in group rooms so slash commands (e.g. `@Worker /new`) are correctly detected
+
 
