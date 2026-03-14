@@ -109,6 +109,7 @@ After generating the skill, reply to Manager confirming:
 
 ## Important Notes
 
+- **mcporter not installed?** CoPaw workers may not have `mcporter` pre-installed. If `mcporter` is not found, tell the user and ask whether to install it. Install command: `pnpm add -g mcporter`
 - **Transport**: MCP Servers use HTTP transport (configured in mcporter-servers.json)
 - **Auth**: Authorization header with Bearer token is auto-configured — you don't need to manage credentials
 - **Permissions**: Your MCP access is controlled by Manager. If you get 403 from the MCP Server, ask Manager to re-authorize your access
